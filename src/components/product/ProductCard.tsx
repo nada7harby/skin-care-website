@@ -1,71 +1,97 @@
-import React, { lazy } from 'react';
+import React from 'react';
 import { Link } from 'react-router-dom';
 import { ShoppingBagIcon, HeartIcon, StarIcon } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { Product } from '../../context/CartContext';
 import { useCart } from '../../context/CartContext';
 import { useFavorites } from '../../context/FavoritesContext';
+
 interface ProductCardProps {
   product: Product;
+  index?: number;
 }
-export const ProductCard: React.FC<ProductCardProps> = ({
-  product
-}) => {
-  const {
-    addToCart
-  } = useCart();
-  const {
-    addToFavorites,
-    removeFromFavorites,
-    isFavorite
-  } = useFavorites();
+
+export const ProductCard: React.FC<ProductCardProps> = ({ product, index = 0 }) => {
+  const { addToCart } = useCart();
+  const { addToFavorites, removeFromFavorites, isFavorite } = useFavorites();
+  const favorited = isFavorite(product.id);
+
   const handleFavoriteClick = (e: React.MouseEvent) => {
     e.preventDefault();
-    if (isFavorite(product.id)) {
-      removeFromFavorites(product.id);
-    } else {
-      addToFavorites(product);
-    }
+    favorited ? removeFromFavorites(product.id) : addToFavorites(product);
   };
-  return <motion.div className="card group transition-all duration-300 hover:shadow-lg" whileHover={{
-    y: -5
-  }} transition={{
-    duration: 0.2
-  }}>
-      <div className="relative overflow-hidden">
-        <Link to={`/product/${product.id}`}>
-          <img src={product.image} alt={product.name} className="w-full h-64 object-cover transition-transform duration-500 group-hover:scale-105" loading="lazy" />
-        </Link>
-        <button onClick={handleFavoriteClick} className="absolute top-3 right-3 bg-white p-2 rounded-full shadow-md hover:bg-primary-light transition-colors z-10" aria-label={isFavorite(product.id) ? 'Remove from favorites' : 'Add to favorites'}>
-          <HeartIcon size={20} className={`transition-colors ${isFavorite(product.id) ? 'fill-red-500 text-red-500' : 'text-primary-dark'}`} />
-        </button>
-        <div className="absolute inset-0 bg-black bg-opacity-20 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center">
-          <button onClick={e => {
-          e.preventDefault();
-          addToCart(product);
-        }} className="bg-white p-2 rounded-full shadow-md hover:bg-primary-light transition-colors" aria-label="Add to cart">
-            <ShoppingBagIcon size={20} className="text-primary-dark" />
-          </button>
-        </div>
-      </div>
-      <div className="p-4 bg-primary-light bg-opacity-30">
-        <div className="flex items-center mb-2">
-          <div className="flex">
-            {[...Array(5)].map((_, i) => <StarIcon key={i} size={16} className={`${i < Math.floor(product.rating) ? 'text-yellow-400 fill-yellow-400' : 'text-gray-300'}`} />)}
+
+  const handleAddToCart = (e: React.MouseEvent) => {
+    e.preventDefault();
+    addToCart(product);
+  };
+
+  const batchNo = String((product.id % 20) + 1).padStart(2, '0');
+
+  return (
+    <motion.div
+      className="group relative"
+      initial={{ opacity: 0, y: 24 }}
+      whileInView={{ opacity: 1, y: 0 }}
+      viewport={{ once: true, margin: '-40px' }}
+      transition={{ duration: 0.5, delay: (index % 4) * 0.08, ease: [0.16, 1, 0.3, 1] }}
+    >
+      <Link to={`/product/${product.id}`} className="block">
+        <div className="relative overflow-hidden rounded-2xl bg-porcelain-line/40 aspect-[4/5] mb-4">
+          <img
+            src={product.image}
+            alt={product.name}
+            className="w-full h-full object-cover transition-transform duration-700 ease-expo group-hover:scale-[1.06]"
+            loading="lazy"
+          />
+          <div className="absolute inset-0 bg-gradient-to-t from-espresso/25 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+
+          <div className="absolute top-3 left-3 flex flex-col gap-1.5 items-start">
+            <span className="label-tag bg-espresso/70 text-porcelain-paper backdrop-blur-sm px-2 py-1 rounded-md">
+              N&deg;{batchNo}
+            </span>
+            {product.isNew && (
+              <span className="label-tag bg-sage text-porcelain-paper px-2 py-1 rounded-md">New</span>
+            )}
+            {product.isBestSeller && (
+              <span className="label-tag bg-copper text-porcelain-paper px-2 py-1 rounded-md">Best Seller</span>
+            )}
           </div>
-          <span className="text-sm text-gray-600 ml-1">({product.rating})</span>
+
+          <button
+            onClick={handleFavoriteClick}
+            className="absolute top-3 right-3 w-9 h-9 rounded-full glass-light flex items-center justify-center shadow-card hover:scale-110 transition-transform duration-200 z-10"
+            aria-label={favorited ? 'Remove from favorites' : 'Add to favorites'}
+          >
+            <HeartIcon size={16} className={`transition-colors ${favorited ? 'fill-copper text-copper' : 'text-ink'}`} />
+          </button>
+
+          <div className="absolute inset-x-0 bottom-0 translate-y-full group-hover:translate-y-0 transition-transform duration-400 ease-expo">
+            <button
+              onClick={handleAddToCart}
+              className="w-full glass-light flex items-center justify-center gap-2 py-3 text-ink font-medium text-sm hover:text-copper transition-colors"
+            >
+              <ShoppingBagIcon size={16} />
+              Quick Add
+            </button>
+          </div>
         </div>
-        <Link to={`/product/${product.id}`} className="block">
-          <h3 className="font-medium text-primary-dark hover:text-primary-dark/80 transition-colors">
-            {product.name}
-          </h3>
-        </Link>
-        <div className="mt-2 flex items-center justify-between">
-          <span className="font-semibold text-primary-dark">
-            ${product.price.toFixed(2)}
-          </span>
-          <span className="text-sm text-gray-600">{product.category}</span>
+
+        <div className="flex items-start justify-between gap-2 mb-1">
+          <span className="label-tag text-ink-soft">{product.brand}</span>
+          <div className="flex items-center gap-0.5 shrink-0">
+            <StarIcon size={12} className="fill-copper text-copper" />
+            <span className="text-xs text-ink-muted tabular">{product.rating}</span>
+          </div>
         </div>
-      </div>
-    </motion.div>;
+        <h3 className="font-medium text-ink group-hover:text-copper transition-colors duration-200 leading-snug mb-1.5">
+          {product.name}
+        </h3>
+        <div className="flex items-center justify-between">
+          <span className="font-mono text-ink tabular">${product.price.toFixed(2)}</span>
+          <span className="text-xs text-ink-soft">{product.category}</span>
+        </div>
+      </Link>
+    </motion.div>
+  );
 };

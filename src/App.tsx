@@ -1,4 +1,3 @@
-import React from 'react';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { CartProvider } from './context/CartContext';
 import { FavoritesProvider } from './context/FavoritesContext';
@@ -33,6 +32,7 @@ export function App() {
                 <Route path="/search" element={<SearchResults />} />
                 <Route path="/about" element={<InfoPages />} />
                 <Route path="/contact" element={<InfoPages />} />
+                <Route path="/faq" element={<InfoPages />} />
               </Routes>
             </main>
             <Footer />

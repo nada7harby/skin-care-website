@@ -4,255 +4,186 @@ import { CheckIcon, ArrowLeftIcon } from 'lucide-react';
 import { useCart } from '../context/CartContext';
 import { Button } from '../components/ui/Button';
 import { motion } from 'framer-motion';
+
 export const Checkout: React.FC = () => {
-  const {
-    cart,
-    getTotalPrice
-  } = useCart();
+  const { cart, getTotalPrice } = useCart();
   const [currentStep, setCurrentStep] = useState(1);
   const [formData, setFormData] = useState({
-    email: '',
-    firstName: '',
-    lastName: '',
-    address: '',
-    city: '',
-    state: '',
-    zipCode: '',
-    cardNumber: '',
-    expiryDate: '',
-    cvv: ''
+    email: '', firstName: '', lastName: '', address: '', city: '', state: '', zipCode: '',
+    cardNumber: '', expiryDate: '', cvv: ''
   });
-  const steps = [{
-    number: 1,
-    title: 'Shipping'
-  }, {
-    number: 2,
-    title: 'Payment'
-  }, {
-    number: 3,
-    title: 'Review'
-  }];
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setFormData({
-      ...formData,
-      [e.target.name]: e.target.value
-    });
-  };
-  const handleNextStep = () => {
-    if (currentStep < 3) {
-      setCurrentStep(currentStep + 1);
-    }
-  };
-  const handlePrevStep = () => {
-    if (currentStep > 1) {
-      setCurrentStep(currentStep - 1);
-    }
-  };
+
+  const steps = [{ number: 1, title: 'Shipping' }, { number: 2, title: 'Payment' }, { number: 3, title: 'Review' }];
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => setFormData({ ...formData, [e.target.name]: e.target.value });
+  const handleNextStep = () => currentStep < 3 && setCurrentStep(currentStep + 1);
+  const handlePrevStep = () => currentStep > 1 && setCurrentStep(currentStep - 1);
+
   if (cart.length === 0) {
-    return <div className="container-custom py-16 min-h-[60vh] flex flex-col items-center justify-center">
-        <h2 className="text-2xl font-bold text-primary-dark mb-4">
-          Your Cart is Empty
-        </h2>
-        <p className="text-gray-600 mb-8 text-center">
-          Add some products to your cart before checking out.
-        </p>
+    return (
+      <div className="container-custom pt-32 pb-24 min-h-[60vh] flex flex-col items-center justify-center text-center">
+        <h2 className="text-display-3 font-display font-semibold text-ink mb-4">Your Cart is Empty</h2>
+        <p className="text-ink-muted mb-8">Add some products to your cart before checking out.</p>
         <Link to="/products">
-          <Button className="flex items-center">
+          <Button className="inline-flex items-center">
             <ArrowLeftIcon size={16} className="mr-2" />
             Continue Shopping
           </Button>
         </Link>
-      </div>;
+      </div>
+    );
   }
-  return <div className="container-custom py-12">
-      <h1 className="text-3xl font-bold text-primary-dark mb-8">Checkout</h1>
-      {/* Progress Bar */}
-      <div className="mb-12">
-        <div className="flex items-center justify-between max-w-2xl mx-auto">
-          {steps.map((step, index) => <Fragment key={step.number}>
+
+  return (
+    <div className="container-custom pt-32 pb-24">
+      <h1 className="text-display-2 font-display font-semibold text-ink mb-12">Checkout</h1>
+
+      <div className="mb-14">
+        <div className="flex items-center justify-between max-w-xl mx-auto">
+          {steps.map((step, index) => (
+            <Fragment key={step.number}>
               <div className="flex flex-col items-center">
-                <motion.div className={`w-12 h-12 rounded-full flex items-center justify-center font-semibold transition-colors ${currentStep >= step.number ? 'bg-primary-dark text-white' : 'bg-gray-200 text-gray-600'}`} initial={{
-              scale: 0.8
-            }} animate={{
-              scale: currentStep === step.number ? 1.1 : 1
-            }} transition={{
-              duration: 0.3
-            }}>
-                  {currentStep > step.number ? <CheckIcon size={20} /> : step.number}
+                <motion.div
+                  className={`w-10 h-10 rounded-full flex items-center justify-center font-mono text-sm transition-colors ${currentStep >= step.number ? 'bg-copper text-porcelain-paper' : 'bg-porcelain-line text-ink-soft'}`}
+                  animate={{ scale: currentStep === step.number ? 1.1 : 1 }}
+                  transition={{ duration: 0.3 }}
+                >
+                  {currentStep > step.number ? <CheckIcon size={17} /> : String(step.number).padStart(2, '0')}
                 </motion.div>
-                <span className="text-sm mt-2 text-gray-600">{step.title}</span>
+                <span className="text-xs mt-2 text-ink-muted">{step.title}</span>
               </div>
-              {index < steps.length - 1 && <div className={`flex-1 h-1 mx-4 transition-colors ${currentStep > step.number ? 'bg-primary-dark' : 'bg-gray-200'}`} />}
-            </Fragment>)}
+              {index < steps.length - 1 && (
+                <div className={`flex-1 h-px mx-3 transition-colors ${currentStep > step.number ? 'bg-copper' : 'bg-porcelain-line'}`} />
+              )}
+            </Fragment>
+          ))}
         </div>
       </div>
+
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        {/* Form Section */}
         <div className="lg:col-span-2">
-          <div className="bg-white rounded-lg shadow-md p-6">
-            {currentStep === 1 && <motion.div initial={{
-            opacity: 0,
-            x: 20
-          }} animate={{
-            opacity: 1,
-            x: 0
-          }}>
-                <h2 className="text-xl font-bold text-primary-dark mb-6">
-                  Shipping Information
-                </h2>
+          <div className="bg-porcelain-paper border border-porcelain-line rounded-2xl p-7">
+            {currentStep === 1 && (
+              <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }}>
+                <h2 className="font-display font-semibold text-ink mb-6">Shipping Information</h2>
                 <div className="space-y-4">
                   <div>
-                    <label className="block text-gray-700 mb-2">Email</label>
+                    <label className="text-sm text-ink-muted mb-2 block">Email</label>
                     <input type="email" name="email" value={formData.email} onChange={handleInputChange} className="input" placeholder="your@email.com" />
                   </div>
                   <div className="grid grid-cols-2 gap-4">
                     <div>
-                      <label className="block text-gray-700 mb-2">
-                        First Name
-                      </label>
+                      <label className="text-sm text-ink-muted mb-2 block">First Name</label>
                       <input type="text" name="firstName" value={formData.firstName} onChange={handleInputChange} className="input" />
                     </div>
                     <div>
-                      <label className="block text-gray-700 mb-2">
-                        Last Name
-                      </label>
+                      <label className="text-sm text-ink-muted mb-2 block">Last Name</label>
                       <input type="text" name="lastName" value={formData.lastName} onChange={handleInputChange} className="input" />
                     </div>
                   </div>
                   <div>
-                    <label className="block text-gray-700 mb-2">Address</label>
+                    <label className="text-sm text-ink-muted mb-2 block">Address</label>
                     <input type="text" name="address" value={formData.address} onChange={handleInputChange} className="input" />
                   </div>
                   <div className="grid grid-cols-3 gap-4">
                     <div>
-                      <label className="block text-gray-700 mb-2">City</label>
+                      <label className="text-sm text-ink-muted mb-2 block">City</label>
                       <input type="text" name="city" value={formData.city} onChange={handleInputChange} className="input" />
                     </div>
                     <div>
-                      <label className="block text-gray-700 mb-2">State</label>
+                      <label className="text-sm text-ink-muted mb-2 block">State</label>
                       <input type="text" name="state" value={formData.state} onChange={handleInputChange} className="input" />
                     </div>
                     <div>
-                      <label className="block text-gray-700 mb-2">
-                        ZIP Code
-                      </label>
+                      <label className="text-sm text-ink-muted mb-2 block">ZIP Code</label>
                       <input type="text" name="zipCode" value={formData.zipCode} onChange={handleInputChange} className="input" />
                     </div>
                   </div>
                 </div>
-              </motion.div>}
-            {currentStep === 2 && <motion.div initial={{
-            opacity: 0,
-            x: 20
-          }} animate={{
-            opacity: 1,
-            x: 0
-          }}>
-                <h2 className="text-xl font-bold text-primary-dark mb-6">
-                  Payment Information
-                </h2>
+              </motion.div>
+            )}
+            {currentStep === 2 && (
+              <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }}>
+                <h2 className="font-display font-semibold text-ink mb-6">Payment Information</h2>
                 <div className="space-y-4">
                   <div>
-                    <label className="block text-gray-700 mb-2">
-                      Card Number
-                    </label>
+                    <label className="text-sm text-ink-muted mb-2 block">Card Number</label>
                     <input type="text" name="cardNumber" value={formData.cardNumber} onChange={handleInputChange} className="input" placeholder="1234 5678 9012 3456" />
                   </div>
                   <div className="grid grid-cols-2 gap-4">
                     <div>
-                      <label className="block text-gray-700 mb-2">
-                        Expiry Date
-                      </label>
+                      <label className="text-sm text-ink-muted mb-2 block">Expiry Date</label>
                       <input type="text" name="expiryDate" value={formData.expiryDate} onChange={handleInputChange} className="input" placeholder="MM/YY" />
                     </div>
                     <div>
-                      <label className="block text-gray-700 mb-2">CVV</label>
+                      <label className="text-sm text-ink-muted mb-2 block">CVV</label>
                       <input type="text" name="cvv" value={formData.cvv} onChange={handleInputChange} className="input" placeholder="123" />
                     </div>
                   </div>
                 </div>
-              </motion.div>}
-            {currentStep === 3 && <motion.div initial={{
-            opacity: 0,
-            x: 20
-          }} animate={{
-            opacity: 1,
-            x: 0
-          }}>
-                <h2 className="text-xl font-bold text-primary-dark mb-6">
-                  Review Your Order
-                </h2>
+              </motion.div>
+            )}
+            {currentStep === 3 && (
+              <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }}>
+                <h2 className="font-display font-semibold text-ink mb-6">Review Your Order</h2>
                 <div className="space-y-6">
                   <div>
-                    <h3 className="font-semibold text-gray-700 mb-2">
-                      Shipping Address
-                    </h3>
-                    <p className="text-gray-600">
-                      {formData.firstName} {formData.lastName}
-                      <br />
-                      {formData.address}
-                      <br />
+                    <h3 className="label-tag text-ink-muted mb-2">Shipping Address</h3>
+                    <p className="text-ink-muted leading-relaxed">
+                      {formData.firstName} {formData.lastName}<br />
+                      {formData.address}<br />
                       {formData.city}, {formData.state} {formData.zipCode}
                     </p>
                   </div>
                   <div>
-                    <h3 className="font-semibold text-gray-700 mb-2">
-                      Order Items
-                    </h3>
+                    <h3 className="label-tag text-ink-muted mb-3">Order Items</h3>
                     <div className="space-y-2">
-                      {cart.map(item => <div key={item.product.id} className="flex justify-between text-gray-600">
-                          <span>
-                            {item.product.name} × {item.quantity}
-                          </span>
-                          <span>
-                            ${(item.product.price * item.quantity).toFixed(2)}
-                          </span>
-                        </div>)}
+                      {cart.map(item => (
+                        <div key={item.product.id} className="flex justify-between text-ink-muted text-sm">
+                          <span>{item.product.name} × {item.quantity}</span>
+                          <span className="font-mono tabular">${(item.product.price * item.quantity).toFixed(2)}</span>
+                        </div>
+                      ))}
                     </div>
                   </div>
                 </div>
-              </motion.div>}
-            <div className="flex justify-between mt-8">
-              {currentStep > 1 && <Button variant="outline" onClick={handlePrevStep}>
-                  Back
-                </Button>}
+              </motion.div>
+            )}
+            <div className="flex justify-between mt-8 pt-6 border-t border-porcelain-line">
+              {currentStep > 1 && <Button variant="outline" onClick={handlePrevStep}>Back</Button>}
               <Button onClick={handleNextStep} className={currentStep === 1 ? 'ml-auto' : ''}>
                 {currentStep === 3 ? 'Place Order' : 'Continue'}
               </Button>
             </div>
           </div>
         </div>
-        {/* Order Summary */}
+
         <div className="lg:col-span-1">
-          <div className="bg-white rounded-lg shadow-md p-6 sticky top-24">
-            <h2 className="text-xl font-bold text-primary-dark mb-4">
-              Order Summary
-            </h2>
-            <div className="space-y-3 mb-6">
-              <div className="flex justify-between text-gray-600">
+          <div className="bg-porcelain-paper border border-porcelain-line rounded-2xl p-7 lg:sticky lg:top-28">
+            <h2 className="font-display font-semibold text-ink mb-5">Order Summary</h2>
+            <div className="space-y-3 mb-3 text-sm">
+              <div className="flex justify-between text-ink-muted">
                 <span>Subtotal</span>
-                <span>${getTotalPrice().toFixed(2)}</span>
+                <span className="font-mono tabular">${getTotalPrice().toFixed(2)}</span>
               </div>
-              <div className="flex justify-between text-gray-600">
+              <div className="flex justify-between text-ink-muted">
                 <span>Shipping</span>
-                <span>$5.99</span>
+                <span className="font-mono tabular">$5.99</span>
               </div>
-              <div className="flex justify-between text-gray-600">
+              <div className="flex justify-between text-ink-muted">
                 <span>Tax</span>
-                <span>${(getTotalPrice() * 0.08).toFixed(2)}</span>
+                <span className="font-mono tabular">${(getTotalPrice() * 0.08).toFixed(2)}</span>
               </div>
-              <div className="border-t pt-3 mt-3">
-                <div className="flex justify-between font-bold">
-                  <span className="text-primary-dark">Total</span>
-                  <span className="text-primary-dark">
-                    $
-                    {(getTotalPrice() + 5.99 + getTotalPrice() * 0.08).toFixed(2)}
-                  </span>
+              <div className="border-t border-dashed border-porcelain-line pt-3 mt-3">
+                <div className="flex justify-between font-semibold text-ink">
+                  <span>Total</span>
+                  <span className="font-mono text-lg tabular">${(getTotalPrice() + 5.99 + getTotalPrice() * 0.08).toFixed(2)}</span>
                 </div>
               </div>
             </div>
           </div>
         </div>
       </div>
-    </div>;
+    </div>
+  );
 };

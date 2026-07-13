@@ -140,7 +140,7 @@ export const products: Product[] = [
     name: "Hyaluronic Acid Serum",
     price: 34.99,
     image:
-      "https://images.pexels.com/photos/7428084/pexels-photo-7428084.jpeg?auto=compress&cs=tinysrgb&w=500",
+      "https://images.pexels.com/photos/3762875/pexels-photo-3762875.jpeg?auto=compress&cs=tinysrgb&w=500",
     category: "Serums",
     brand: "Hydraluxe",
     description:
@@ -164,7 +164,7 @@ export const products: Product[] = [
     name: "Overnight Hydration Mask",
     price: 26.99,
     image:
-      "https://images.pexels.com/photos/3738383/pexels-photo-3738383.jpeg?auto=compress&cs=tinysrgb&w=500",
+      "https://images.pexels.com/photos/7428102/pexels-photo-7428102.jpeg?auto=compress&cs=tinysrgb&w=500",
     category: "Masks",
     brand: "NightRevive",
     description:
@@ -187,7 +187,7 @@ export const products: Product[] = [
     id: 9,
     name: "Niacinamide Pore Refining Serum",
     price: 32.99,
-    image: "https://images.pexels.com/photos/3738383/pexels-photo-3738383.jpeg?auto=compress&cs=tinysrgb&w=500",
+    image: "https://images.pexels.com/photos/7428094/pexels-photo-7428094.jpeg?auto=compress&cs=tinysrgb&w=500",
     category: "Serums",
     brand: "PureGlow",
     description:
@@ -310,7 +310,7 @@ export const products: Product[] = [
     name: "Rose Water Toner",
     price: 16.99,
     image:
-      "https://images.pexels.com/photos/5029857/pexels-photo-5029857.jpeg?auto=compress&cs=tinysrgb&w=500",
+      "https://images.pexels.com/photos/4465124/pexels-photo-4465124.jpeg?auto=compress&cs=tinysrgb&w=500",
     category: "Toners",
     brand: "NightRevive",
     description:

@@ -2,42 +2,56 @@ import React, { useState } from 'react';
 import { SearchIcon } from 'lucide-react';
 import { ProductGrid } from '../components/product/ProductGrid';
 import { products } from '../data/products';
+
 export const SearchResults: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState(products);
+
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
-    const filtered = products.filter(product => 
-      product.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
-      product.description.toLowerCase().includes(searchQuery.toLowerCase()) || 
+    const filtered = products.filter(product =>
+      product.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      product.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
       product.category.toLowerCase().includes(searchQuery.toLowerCase()) ||
       product.brand.toLowerCase().includes(searchQuery.toLowerCase())
     );
     setSearchResults(filtered);
   };
-  return <div className="container-custom py-12">
-      <h1 className="text-3xl font-bold text-primary-dark mb-8">
-        Search Products
-      </h1>
-      <form onSubmit={handleSearch} className="mb-12">
-        <div className="flex max-w-2xl mx-auto">
-          <input type="text" value={searchQuery} onChange={e => setSearchQuery(e.target.value)} placeholder="Search for products..." className="flex-grow px-6 py-4 text-lg rounded-l-md border border-gray-300 focus:outline-none focus:ring-2 focus:ring-primary-dark" />
-          <button type="submit" className="bg-primary-dark text-white px-8 py-4 rounded-r-md hover:bg-opacity-90 transition-colors flex items-center">
-            <SearchIcon size={24} className="mr-2" />
-            Search
+
+  return (
+    <div className="container-custom pt-32 pb-24">
+      <div className="text-center mb-12">
+        <span className="eyebrow-mono">Find your formula</span>
+        <h1 className="text-display-2 font-display font-semibold text-ink mt-1">Search Products</h1>
+      </div>
+      <form onSubmit={handleSearch} className="mb-14">
+        <div className="flex max-w-xl mx-auto border border-porcelain-line rounded-xl overflow-hidden focus-within:border-copper focus-within:ring-2 focus-within:ring-copper/15 transition-all">
+          <input
+            type="text"
+            value={searchQuery}
+            onChange={e => setSearchQuery(e.target.value)}
+            placeholder="Search for products, brands, ingredients…"
+            className="flex-grow px-5 py-4 bg-porcelain-paper text-ink placeholder:text-ink-soft focus:outline-none"
+          />
+          <button type="submit" className="bg-copper text-porcelain-paper px-6 hover:bg-copper-deep transition-colors flex items-center gap-2 font-medium">
+            <SearchIcon size={18} />
+            <span className="hidden sm:inline">Search</span>
           </button>
         </div>
       </form>
-      {searchQuery && <div className="mb-6">
-          <p className="text-gray-600">
-            {searchResults.length} results for "{searchQuery}"
-          </p>
-        </div>}
-      {searchResults.length > 0 ? <ProductGrid products={searchResults} /> : <div className="text-center py-16">
-          <h3 className="text-xl font-medium text-primary-dark mb-2">
-            No products found
-          </h3>
-          <p className="text-gray-600">Try adjusting your search terms</p>
-        </div>}
-    </div>;
+      {searchQuery && (
+        <p className="text-ink-muted mb-6 text-center text-sm">
+          <span className="text-ink font-medium tabular">{searchResults.length}</span> results for "{searchQuery}"
+        </p>
+      )}
+      {searchResults.length > 0 ? (
+        <ProductGrid products={searchResults} />
+      ) : (
+        <div className="text-center py-20">
+          <h3 className="font-display font-semibold text-ink mb-2">No products found</h3>
+          <p className="text-ink-muted">Try adjusting your search terms</p>
+        </div>
+      )}
+    </div>
+  );
 };

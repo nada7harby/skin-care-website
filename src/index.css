@@ -1,32 +1,95 @@
 /* URL IMPORTS (SUCH AS FONT IMPORTS) SHOULD BE KEPT ABOVE TAILWIND IMPORTS - DO NOT DELETE THIS COMMENT */
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400..800&family=Public+Sans:ital,wght@0,400;0,500;0,600;0,700;1,400&family=Fragment+Mono:ital@0;1&display=swap');
 /* PLEASE NOTE: THESE TAILWIND IMPORTS SHOULD NEVER BE DELETED - DO NOT DELETE THIS COMMENT */
 @import 'tailwindcss/base';
 @import 'tailwindcss/components';
 @import 'tailwindcss/utilities';
 /* DO NOT DELETE THESE TAILWIND IMPORTS, OTHERWISE THE STYLING WILL NOT RENDER AT ALL - DO NOT DELETE THIS COMMENT */
+
 @layer base {
+  html {
+    scroll-behavior: smooth;
+  }
   body {
-    @apply font-sans bg-gray-50 text-primary-dark;
+    @apply font-sans bg-porcelain text-ink antialiased;
+    font-feature-settings: 'ss01' 1;
+  }
+  h1, h2, h3, h4 {
+    @apply font-display;
+    text-wrap: balance;
+  }
+  p {
+    text-wrap: pretty;
+  }
+  ::selection {
+    background-color: #a8532f;
+    color: #fffcf9;
+  }
+  :focus-visible {
+    outline: 2px solid #a8532f;
+    outline-offset: 3px;
+    border-radius: 2px;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+      scroll-behavior: auto !important;
+    }
   }
 }
+
 @layer components {
-  .btn {
-    @apply px-4 py-2 rounded-md transition-all duration-200 font-medium;
-  }
-  .btn-primary {
-    @apply bg-primary-dark text-white hover:bg-opacity-90;
-  }
-  .btn-secondary {
-    @apply bg-white border border-primary-dark text-primary-dark hover:bg-gray-50;
-  }
   .container-custom {
-    @apply max-w-7xl mx-auto px-4 sm:px-6 lg:px-8;
+    @apply max-w-[1400px] mx-auto px-5 sm:px-8 lg:px-12;
   }
+
+  .eyebrow-mono {
+    @apply font-mono text-[0.7rem] tracking-[0.14em] uppercase text-copper;
+  }
+
   .card {
-    @apply bg-white rounded-lg shadow-md overflow-hidden;
+    @apply bg-porcelain-paper rounded-2xl overflow-hidden border border-porcelain-line;
   }
+
+  .btn {
+    @apply relative inline-flex items-center justify-center gap-2 font-sans font-semibold transition-all duration-300 ease-expo select-none;
+  }
+
   .input {
-    @apply w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-dark focus:border-transparent;
+    @apply w-full px-4 py-3 bg-porcelain-paper border border-porcelain-line rounded-lg text-ink placeholder:text-ink-soft focus:outline-none focus:border-copper focus:ring-2 focus:ring-copper/15 transition-colors duration-200;
+  }
+
+  .label-tag {
+    @apply font-mono text-[0.65rem] tracking-[0.08em] uppercase;
+  }
+
+  .glass-dark {
+    background: rgba(26, 19, 16, 0.55);
+    backdrop-filter: blur(16px) saturate(140%);
+    -webkit-backdrop-filter: blur(16px) saturate(140%);
+  }
+
+  .glass-light {
+    background: rgba(255, 252, 249, 0.92);
+    backdrop-filter: blur(20px) saturate(160%);
+    -webkit-backdrop-filter: blur(20px) saturate(160%);
+  }
+
+  .divider-copper {
+    @apply h-px w-full bg-gradient-to-r from-transparent via-copper/40 to-transparent;
+  }
+
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+  .no-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+
+  .tabular {
+    font-variant-numeric: tabular-nums;
   }
 }
