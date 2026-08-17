@@ -1,11 +1,26 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { MinusIcon, PlusIcon, TrashIcon, ArrowLeftIcon, ShoppingBagIcon } from 'lucide-react';
 import { useCart } from '../context/CartContext';
 import { Button } from '../components/ui/Button';
+import { useStoreData } from '../context/StoreDataContext';
+import { useToast } from '../context/ToastContext';
 
 export const Cart: React.FC = () => {
-  const { cart, updateQuantity, removeFromCart, getTotalPrice } = useCart();
+  const { cart, updateQuantity, removeFromCart, getTotalPrice, applyCoupon, clearCoupon, coupon, getDiscount, getPayableTotal } = useCart();
+  const { validateCoupon } = useStoreData();
+  const { notify } = useToast();
+  const [promoCode, setPromoCode] = useState(coupon?.code || '');
+
+  const handleApplyCode = () => {
+    const result = validateCoupon(promoCode, getTotalPrice());
+    if (!result) {
+      notify('Coupon is invalid or minimum order was not reached.', 'error');
+      return;
+    }
+    applyCoupon(result.coupon.code, result.discount);
+    notify(`${result.coupon.code} applied.`);
+  };
 
   if (cart.length === 0) {
     return (
@@ -96,16 +111,25 @@ export const Cart: React.FC = () => {
                 <span>Tax</span>
                 <span>Calculated at checkout</span>
               </div>
+              {coupon && (
+                <div className="flex justify-between text-sage">
+                  <span>Discount ({coupon.code})</span>
+                  <span className="font-mono tabular">-${getDiscount().toFixed(2)}</span>
+                </div>
+              )}
               <div className="border-t border-dashed border-porcelain-line pt-3 mt-3">
                 <div className="flex justify-between font-semibold text-ink">
                   <span>Total</span>
-                  <span className="font-mono text-lg tabular">${getTotalPrice().toFixed(2)}</span>
+                  <span className="font-mono text-lg tabular">${getPayableTotal().toFixed(2)}</span>
                 </div>
               </div>
             </div>
             <div className="mb-6">
-              <input type="text" placeholder="Promo code" className="input mb-2" />
-              <Button variant="outline" fullWidth>Apply Code</Button>
+              <input type="text" placeholder="Promo code" value={promoCode} onChange={e => setPromoCode(e.target.value.toUpperCase())} className="input mb-2" />
+              <div className="grid grid-cols-2 gap-2">
+                <Button variant="outline" fullWidth onClick={handleApplyCode}>Apply Code</Button>
+                <Button variant="ghost" fullWidth onClick={() => { clearCoupon(); setPromoCode(''); }}>Clear</Button>
+              </div>
             </div>
             <Link to="/checkout">
               <Button fullWidth size="lg">Proceed to Checkout</Button>

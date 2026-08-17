@@ -1,15 +1,17 @@
 import React, { useState } from 'react';
 import { SearchIcon } from 'lucide-react';
 import { ProductGrid } from '../components/product/ProductGrid';
-import { products } from '../data/products';
+import { useStoreData } from '../context/StoreDataContext';
 
 export const SearchResults: React.FC = () => {
+  const { products } = useStoreData();
+  const searchableProducts = products.filter(product => product.status !== 'Archived');
   const [searchQuery, setSearchQuery] = useState('');
-  const [searchResults, setSearchResults] = useState(products);
+  const [searchResults, setSearchResults] = useState(searchableProducts);
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
-    const filtered = products.filter(product =>
+    const filtered = searchableProducts.filter(product =>
       product.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
       product.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
       product.category.toLowerCase().includes(searchQuery.toLowerCase()) ||

@@ -4,10 +4,15 @@ import { CheckIcon, ArrowLeftIcon } from 'lucide-react';
 import { useCart } from '../context/CartContext';
 import { Button } from '../components/ui/Button';
 import { motion } from 'framer-motion';
+import { useStoreData } from '../context/StoreDataContext';
+import { useToast } from '../context/ToastContext';
 
 export const Checkout: React.FC = () => {
-  const { cart, getTotalPrice } = useCart();
+  const { cart, getTotalPrice, getDiscount, coupon, clearCart } = useCart();
+  const { createOrderFromCart, settings } = useStoreData();
+  const { notify } = useToast();
   const [currentStep, setCurrentStep] = useState(1);
+  const [placedOrder, setPlacedOrder] = useState<string | null>(null);
   const [formData, setFormData] = useState({
     email: '', firstName: '', lastName: '', address: '', city: '', state: '', zipCode: '',
     cardNumber: '', expiryDate: '', cvv: ''
@@ -16,8 +21,50 @@ export const Checkout: React.FC = () => {
   const steps = [{ number: 1, title: 'Shipping' }, { number: 2, title: 'Payment' }, { number: 3, title: 'Review' }];
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => setFormData({ ...formData, [e.target.name]: e.target.value });
-  const handleNextStep = () => currentStep < 3 && setCurrentStep(currentStep + 1);
+  const shipping = getTotalPrice() >= settings.freeShippingMinimum ? 0 : settings.shippingCost;
+  const tax = settings.taxEnabled ? getTotalPrice() * (settings.taxPercentage / 100) : 0;
+  const total = getTotalPrice() + shipping + tax - getDiscount();
+
+  const handleNextStep = () => {
+    if (currentStep < 3) {
+      setCurrentStep(currentStep + 1);
+      return;
+    }
+    const order = createOrderFromCart({
+      customerId: 1,
+      customer: `${formData.firstName || 'Guest'} ${formData.lastName || 'Customer'}`.trim(),
+      email: formData.email || 'guest@example.com',
+      items: cart.map(item => ({ productId: item.product.id, name: item.product.name, image: item.product.image, quantity: item.quantity, unitPrice: item.product.price })),
+      subtotal: getTotalPrice(),
+      shipping,
+      tax: Number(tax.toFixed(2)),
+      discount: getDiscount(),
+      total: Number(total.toFixed(2)),
+      promoCode: coupon?.code,
+      paymentStatus: 'Paid',
+      orderStatus: 'Pending',
+      shippingStatus: 'Pending',
+      shippingAddress: `${formData.address}, ${formData.city}, ${formData.state} ${formData.zipCode}`,
+      billingAddress: `${formData.address}, ${formData.city}, ${formData.state} ${formData.zipCode}`,
+      paymentMethod: 'Mock credit card',
+      shippingMethod: shipping === 0 ? 'Free standard shipping' : 'Standard shipping',
+      notes: [],
+    });
+    clearCart();
+    setPlacedOrder(order.orderNumber);
+    notify(`${order.orderNumber} created and sent to admin orders.`);
+  };
   const handlePrevStep = () => currentStep > 1 && setCurrentStep(currentStep - 1);
+
+  if (placedOrder) {
+    return (
+      <div className="container-custom pt-32 pb-24 min-h-[60vh] flex flex-col items-center justify-center text-center">
+        <h2 className="text-display-3 font-display font-semibold text-ink mb-4">Order Placed</h2>
+        <p className="text-ink-muted mb-8">Your mock order {placedOrder} is now visible in the admin dashboard.</p>
+        <Link to="/products"><Button>Continue Shopping</Button></Link>
+      </div>
+    );
+  }
 
   if (cart.length === 0) {
     return (
@@ -168,22 +215,28 @@ export const Checkout: React.FC = () => {
               </div>
               <div className="flex justify-between text-ink-muted">
                 <span>Shipping</span>
-                <span className="font-mono tabular">$5.99</span>
+                  <span className="font-mono tabular">${shipping.toFixed(2)}</span>
               </div>
               <div className="flex justify-between text-ink-muted">
                 <span>Tax</span>
-                <span className="font-mono tabular">${(getTotalPrice() * 0.08).toFixed(2)}</span>
+                  <span className="font-mono tabular">${tax.toFixed(2)}</span>
+                </div>
+                {coupon && (
+                  <div className="flex justify-between text-sage">
+                    <span>Discount ({coupon.code})</span>
+                    <span className="font-mono tabular">-${getDiscount().toFixed(2)}</span>
+                  </div>
+                )}
               </div>
               <div className="border-t border-dashed border-porcelain-line pt-3 mt-3">
                 <div className="flex justify-between font-semibold text-ink">
                   <span>Total</span>
-                  <span className="font-mono text-lg tabular">${(getTotalPrice() + 5.99 + getTotalPrice() * 0.08).toFixed(2)}</span>
+                  <span className="font-mono text-lg tabular">${total.toFixed(2)}</span>
                 </div>
               </div>
             </div>
           </div>
         </div>
-      </div>
     </div>
   );
 };

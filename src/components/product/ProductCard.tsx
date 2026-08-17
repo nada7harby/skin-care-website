@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useRef } from 'react';
 import { Link } from 'react-router-dom';
 import { ShoppingBagIcon, HeartIcon, StarIcon } from 'lucide-react';
 import { motion } from 'framer-motion';
@@ -11,10 +11,21 @@ interface ProductCardProps {
   index?: number;
 }
 
+const TILT_STYLE = {
+  '--r-x': '0deg',
+  '--r-y': '0deg',
+  '--m-x': '50%',
+  '--m-y': '50%',
+  '--glare-o': '0',
+  transform: 'perspective(1000px) rotateX(var(--r-y)) rotateY(var(--r-x))',
+} as React.CSSProperties;
+
 export const ProductCard: React.FC<ProductCardProps> = ({ product, index = 0 }) => {
   const { addToCart } = useCart();
   const { addToFavorites, removeFromFavorites, isFavorite } = useFavorites();
   const favorited = isFavorite(product.id);
+  const isOutOfStock = (product.stock ?? 1) <= 0 || product.stockStatus === 'Out of Stock';
+  const cardRef = useRef<HTMLAnchorElement>(null);
 
   const handleFavoriteClick = (e: React.MouseEvent) => {
     e.preventDefault();
@@ -23,7 +34,30 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, index = 0 }) 
 
   const handleAddToCart = (e: React.MouseEvent) => {
     e.preventDefault();
+    if (isOutOfStock) return;
     addToCart(product);
+  };
+
+  const handlePointerMove = (e: React.PointerEvent<HTMLAnchorElement>) => {
+    if (e.pointerType !== 'mouse') return;
+    const card = cardRef.current;
+    if (!card) return;
+    const rect = card.getBoundingClientRect();
+    const px = ((e.clientX - rect.left) / rect.width) * 100;
+    const py = ((e.clientY - rect.top) / rect.height) * 100;
+    card.style.setProperty('--r-x', `${((px - 50) / 6).toFixed(2)}deg`);
+    card.style.setProperty('--r-y', `${((50 - py) / 8).toFixed(2)}deg`);
+    card.style.setProperty('--m-x', `${px}%`);
+    card.style.setProperty('--m-y', `${py}%`);
+    card.style.setProperty('--glare-o', '1');
+  };
+
+  const handlePointerLeave = () => {
+    const card = cardRef.current;
+    if (!card) return;
+    card.style.setProperty('--r-x', '0deg');
+    card.style.setProperty('--r-y', '0deg');
+    card.style.setProperty('--glare-o', '0');
   };
 
   const batchNo = String((product.id % 20) + 1).padStart(2, '0');
@@ -36,7 +70,14 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, index = 0 }) 
       viewport={{ once: true, margin: '-40px' }}
       transition={{ duration: 0.5, delay: (index % 4) * 0.08, ease: [0.16, 1, 0.3, 1] }}
     >
-      <Link to={`/product/${product.id}`} className="block">
+      <Link
+        ref={cardRef}
+        to={`/product/${product.id}`}
+        className="block rounded-2xl will-change-transform transition-[transform,box-shadow] duration-300 ease-out hover:shadow-glow"
+        style={TILT_STYLE}
+        onPointerMove={handlePointerMove}
+        onPointerLeave={handlePointerLeave}
+      >
         <div className="relative overflow-hidden rounded-2xl bg-porcelain-line/40 aspect-[4/5] mb-4">
           <img
             src={product.image}
@@ -45,6 +86,20 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, index = 0 }) 
             loading="lazy"
           />
           <div className="absolute inset-0 bg-gradient-to-t from-espresso/25 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+          <div
+            className="pointer-events-none absolute inset-0 mix-blend-soft-light transition-opacity duration-300"
+            style={{
+              opacity: 'var(--glare-o)',
+              background: 'radial-gradient(circle at var(--m-x) var(--m-y), rgba(255,255,255,0.9), rgba(255,255,255,0) 55%)',
+            }}
+          />
+          <div
+            className="pointer-events-none absolute inset-0 transition-opacity duration-300"
+            style={{
+              opacity: 'var(--glare-o)',
+              background: 'radial-gradient(circle at var(--m-x) var(--m-y), rgba(242,168,106,0.35), rgba(242,168,106,0) 45%)',
+            }}
+          />
 
           <div className="absolute top-3 left-3 flex flex-col gap-1.5 items-start">
             <span className="label-tag bg-espresso/70 text-porcelain-paper backdrop-blur-sm px-2 py-1 rounded-md">
@@ -55,6 +110,9 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, index = 0 }) 
             )}
             {product.isBestSeller && (
               <span className="label-tag bg-copper text-porcelain-paper px-2 py-1 rounded-md">Best Seller</span>
+            )}
+            {isOutOfStock && (
+              <span className="label-tag bg-rust text-porcelain-paper px-2 py-1 rounded-md">Out of Stock</span>
             )}
           </div>
 
@@ -69,10 +127,11 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, index = 0 }) 
           <div className="absolute inset-x-0 bottom-0 translate-y-full group-hover:translate-y-0 transition-transform duration-400 ease-expo">
             <button
               onClick={handleAddToCart}
-              className="w-full glass-light flex items-center justify-center gap-2 py-3 text-ink font-medium text-sm hover:text-copper transition-colors"
+              disabled={isOutOfStock}
+              className="w-full glass-light flex items-center justify-center gap-2 py-3 text-ink font-medium text-sm hover:text-copper transition-colors disabled:cursor-not-allowed disabled:text-ink-soft"
             >
               <ShoppingBagIcon size={16} />
-              Quick Add
+              {isOutOfStock ? 'Out of Stock' : 'Quick Add'}
             </button>
           </div>
         </div>

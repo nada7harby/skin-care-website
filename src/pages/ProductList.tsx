@@ -1,10 +1,10 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { useLocation } from 'react-router-dom';
 import { FilterIcon, XIcon, ChevronDownIcon } from 'lucide-react';
 import { ProductGrid } from '../components/product/ProductGrid';
 import { Button } from '../components/ui/Button';
-import { products, categories as allCategories, brands as allBrands } from '../data/products';
 import { Product } from '../context/CartContext';
+import { useStoreData } from '../context/StoreDataContext';
 
 const FilterGroup: React.FC<{ title: string; children: React.ReactNode }> = ({ title, children }) => (
   <div className="py-6 border-b border-porcelain-line last:border-0">
@@ -25,10 +25,12 @@ const RadioRow: React.FC<{ id: string; checked: boolean; onChange: () => void; l
 
 export const ProductList: React.FC = () => {
   const location = useLocation();
+  const { products, categories: managedCategories, brands: managedBrands } = useStoreData();
   const queryParams = new URLSearchParams(location.search);
   const categoryParam = queryParams.get('category');
 
-  const [filteredProducts, setFilteredProducts] = useState<Product[]>(products);
+  const activeProducts = useMemo(() => products.filter(product => product.status !== 'Archived'), [products]);
+  const [filteredProducts, setFilteredProducts] = useState<Product[]>(activeProducts);
   const [filters, setFilters] = useState({
     category: categoryParam || 'all',
     brand: 'all',
@@ -38,8 +40,8 @@ export const ProductList: React.FC = () => {
   });
   const [showFilters, setShowFilters] = useState(false);
 
-  const categories = ['all', ...allCategories];
-  const brands = ['all', ...allBrands];
+  const categories = ['all', ...managedCategories.filter(item => item.status === 'Active').map(item => item.name)];
+  const brands = ['all', ...managedBrands.filter(item => item.status === 'Active').map(item => item.name)];
 
   const priceRanges = [
     { label: 'All Prices', value: 'all' },
@@ -65,7 +67,7 @@ export const ProductList: React.FC = () => {
   ];
 
   useEffect(() => {
-    let result = [...products];
+    let result = [...activeProducts];
     if (filters.category !== 'all') result = result.filter(p => p.category === filters.category);
     if (filters.brand !== 'all') result = result.filter(p => p.brand === filters.brand);
     switch (filters.priceRange) {
@@ -87,7 +89,7 @@ export const ProductList: React.FC = () => {
       default: break;
     }
     setFilteredProducts(result);
-  }, [filters]);
+  }, [filters, activeProducts]);
 
   useEffect(() => {
     if (categoryParam) setFilters(prev => ({ ...prev, category: categoryParam }));
@@ -102,7 +104,7 @@ export const ProductList: React.FC = () => {
       <div className="mb-10">
         <span className="eyebrow-mono">The full catalog</span>
         <h1 className="text-display-2 font-display font-semibold text-ink mt-1 mb-2">Shop All</h1>
-        <p className="text-ink-muted">{products.length} formulas, sorted, filtered, and ready to ship.</p>
+        <p className="text-ink-muted">{activeProducts.length} formulas, sorted, filtered, and ready to ship.</p>
       </div>
 
       <div className="flex flex-col lg:flex-row gap-12">

@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { UserIcon, PackageIcon, HeartIcon, SettingsIcon } from 'lucide-react';
 import { useFavorites } from '../context/FavoritesContext';
 import { Button } from '../components/ui/Button';
+import { useStoreData } from '../context/StoreDataContext';
 
 const navItems = [
   { id: 'orders', label: 'My Orders', icon: PackageIcon },
@@ -11,12 +12,10 @@ const navItems = [
 
 export const Profile: React.FC = () => {
   const { favorites } = useFavorites();
+  const { customers, orders } = useStoreData();
   const [activeTab, setActiveTab] = useState('orders');
-  const orders = [
-    { id: 'ORD-001', date: '2024-01-15', status: 'Delivered', total: 89.97, items: 3 },
-    { id: 'ORD-002', date: '2024-01-10', status: 'In Transit', total: 54.99, items: 2 },
-    { id: 'ORD-003', date: '2024-01-05', status: 'Processing', total: 124.98, items: 4 },
-  ];
+  const customer = customers[0];
+  const customerOrders = orders.filter(order => order.customerId === customer?.id || order.email === customer?.email);
   const statusStyle = (status: string) =>
     status === 'Delivered' ? 'bg-sage/10 text-sage' : status === 'In Transit' ? 'bg-copper/10 text-copper' : 'bg-ink/8 text-ink-muted';
 
@@ -30,8 +29,8 @@ export const Profile: React.FC = () => {
               <div className="w-16 h-16 bg-copper/10 rounded-full flex items-center justify-center mb-3">
                 <UserIcon size={26} className="text-copper" />
               </div>
-              <h2 className="font-display font-semibold text-ink">Sarah Johnson</h2>
-              <p className="text-sm text-ink-soft">sarah.j@email.com</p>
+              <h2 className="font-display font-semibold text-ink">{customer?.name || 'GlowSkin Customer'}</h2>
+              <p className="text-sm text-ink-soft">{customer?.email}</p>
             </div>
             <nav className="space-y-1">
               {navItems.map(({ id, label, icon: Icon }) => (
@@ -54,17 +53,17 @@ export const Profile: React.FC = () => {
               <div>
                 <h2 className="font-display font-semibold text-ink mb-6">Order History</h2>
                 <div className="space-y-4">
-                  {orders.map(order => (
+                  {customerOrders.map(order => (
                     <div key={order.id} className="border border-porcelain-line rounded-xl p-5">
                       <div className="flex justify-between items-start mb-3">
                         <div>
-                          <h3 className="font-mono text-sm text-ink">{order.id}</h3>
+                          <h3 className="font-mono text-sm text-ink">{order.orderNumber}</h3>
                           <p className="text-sm text-ink-soft">Placed on {order.date}</p>
                         </div>
-                        <span className={`label-tag px-2.5 py-1 rounded-full ${statusStyle(order.status)}`}>{order.status}</span>
+                        <span className={`label-tag px-2.5 py-1 rounded-full ${statusStyle(order.orderStatus)}`}>{order.orderStatus}</span>
                       </div>
                       <div className="flex justify-between items-center">
-                        <span className="text-ink-muted text-sm">{order.items} items</span>
+                        <span className="text-ink-muted text-sm">{order.items.length} items</span>
                         <div className="flex items-center gap-4">
                           <span className="font-mono font-medium text-ink tabular">${order.total.toFixed(2)}</span>
                           <Button size="sm" variant="outline">View Details</Button>
@@ -104,20 +103,20 @@ export const Profile: React.FC = () => {
                     <div className="grid grid-cols-2 gap-4">
                       <div>
                         <label className="text-sm text-ink-muted mb-2 block">First Name</label>
-                        <input type="text" className="input" defaultValue="Sarah" />
+                      <input type="text" className="input" defaultValue={customer?.name.split(' ')[0]} />
                       </div>
                       <div>
                         <label className="text-sm text-ink-muted mb-2 block">Last Name</label>
-                        <input type="text" className="input" defaultValue="Johnson" />
+                      <input type="text" className="input" defaultValue={customer?.name.split(' ').slice(1).join(' ')} />
                       </div>
                     </div>
                     <div>
                       <label className="text-sm text-ink-muted mb-2 block">Email</label>
-                      <input type="email" className="input" defaultValue="sarah.j@email.com" />
+                    <input type="email" className="input" defaultValue={customer?.email} />
                     </div>
                     <div>
                       <label className="text-sm text-ink-muted mb-2 block">Phone</label>
-                      <input type="tel" className="input" defaultValue="+1 (555) 123-4567" />
+                    <input type="tel" className="input" defaultValue={customer?.phone} />
                     </div>
                   </div>
                 </div>

@@ -5,7 +5,7 @@ import { useCart } from '../context/CartContext';
 import { useFavorites } from '../context/FavoritesContext';
 import { Button } from '../components/ui/Button';
 import { ProductGrid } from '../components/product/ProductGrid';
-import { getProductById, getProductsByCategory } from '../data/products';
+import { useStoreData } from '../context/StoreDataContext';
 
 const tabs = [
   { id: 'description', label: 'Description' },
@@ -18,12 +18,14 @@ export const ProductDetails: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const { addToCart } = useCart();
   const { addToFavorites, removeFromFavorites, isFavorite } = useFavorites();
+  const { products, reviews } = useStoreData();
   const [quantity, setQuantity] = useState(1);
   const [activeTab, setActiveTab] = useState('description');
   const [selectedImage, setSelectedImage] = useState(0);
 
-  const product = getProductById(Number(id));
-  const relatedProducts = product ? getProductsByCategory(product.category).filter(p => p.id !== product.id).slice(0, 4) : [];
+  const product = products.find(item => item.id === Number(id) && item.status !== 'Archived');
+  const relatedProducts = product ? products.filter(p => p.category === product.category && p.id !== product.id && p.status !== 'Archived').slice(0, 4) : [];
+  const productReviews = product ? reviews.filter(review => review.productId === product.id && review.status === 'Approved') : [];
 
   if (!product) {
     return (
@@ -44,9 +46,10 @@ export const ProductDetails: React.FC = () => {
     const value = parseInt(e.target.value);
     if (value > 0) setQuantity(value);
   };
-  const handleAddToCart = () => addToCart(product, quantity);
+  const isOutOfStock = (product.stock ?? 1) <= 0 || product.stockStatus === 'Out of Stock';
+  const handleAddToCart = () => !isOutOfStock && addToCart(product, quantity);
   const handleFavoriteToggle = () => (isFavorite(product.id) ? removeFromFavorites(product.id) : addToFavorites(product));
-  const productImages = [product.image, product.image, product.image];
+  const productImages = product.gallery?.length ? product.gallery : [product.image, product.image, product.image];
   const batchNo = String((product.id % 20) + 1).padStart(2, '0');
 
   return (
@@ -136,9 +139,9 @@ export const ProductDetails: React.FC = () => {
           </div>
 
           <div className="flex flex-col sm:flex-row gap-3 mb-8">
-            <Button fullWidth size="lg" className="flex items-center justify-center" onClick={handleAddToCart}>
+            <Button fullWidth size="lg" className="flex items-center justify-center" onClick={handleAddToCart} disabled={isOutOfStock}>
               <ShoppingBagIcon size={19} className="mr-2" />
-              Add to Cart
+              {isOutOfStock ? 'Out of Stock' : 'Add to Cart'}
             </Button>
             <Button fullWidth size="lg" variant="outline" className="flex items-center justify-center" onClick={handleFavoriteToggle}>
               <HeartIcon size={19} className={`mr-2 ${isFavorite(product.id) ? 'fill-copper text-copper' : ''}`} />
@@ -200,22 +203,19 @@ export const ProductDetails: React.FC = () => {
           )}
           {activeTab === 'reviews' && (
             <div className="space-y-6">
-              {[
-                { name: 'Sarah J.', rating: 5, date: '2 months ago', comment: 'This product exceeded my expectations! My skin feels so much smoother and more hydrated. Will definitely purchase again.' },
-                { name: 'Michael T.', rating: 4, date: '3 months ago', comment: 'Great product overall. I noticed improvements in my skin’s texture after just a week of use.' },
-                { name: 'Emma L.', rating: 5, date: '1 month ago', comment: 'Absolutely love this! It’s gentle on my sensitive skin and really helps with hydration.' },
-              ].map((review, index) => (
-                <div key={index} className="pb-6 border-b border-porcelain-line last:border-0">
+              {productReviews.length === 0 && <p className="text-ink-muted">No approved reviews yet.</p>}
+              {productReviews.map((review) => (
+                <div key={review.id} className="pb-6 border-b border-porcelain-line last:border-0">
                   <div className="flex items-center gap-2 mb-2">
-                    <span className="font-medium text-ink">{review.name}</span>
-                    <span className="text-ink-soft text-sm">· {review.date}</span>
+                    <span className="font-medium text-ink">{review.customer}</span>
+                    <span className="text-ink-soft text-sm">- {review.date}</span>
                   </div>
                   <div className="flex mb-2.5">
                     {[...Array(5)].map((_, i) => (
                       <StarIcon key={i} size={14} className={i < review.rating ? 'fill-copper text-copper' : 'text-porcelain-line'} />
                     ))}
                   </div>
-                  <p className="text-ink-muted leading-relaxed">{review.comment}</p>
+                  <p className="text-ink-muted leading-relaxed">{review.review}</p>
                 </div>
               ))}
             </div>
@@ -227,3 +227,4 @@ export const ProductDetails: React.FC = () => {
     </div>
   );
 };
+

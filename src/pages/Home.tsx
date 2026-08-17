@@ -16,7 +16,8 @@ import { ProductGrid } from '../components/product/ProductGrid';
 import { ProductCard } from '../components/product/ProductCard';
 import { Button } from '../components/ui/Button';
 import { AnimatedSection } from '../components/ui/AnimatedSection';
-import { featuredProducts, products } from '../data/products';
+import { useStoreData } from '../context/StoreDataContext';
+import { useToast } from '../context/ToastContext';
 
 const heroSlides = [
   {
@@ -56,12 +57,6 @@ const categories = [
   { name: 'Toners', image: 'https://images.pexels.com/photos/4465124/pexels-photo-4465124.jpeg?auto=compress&cs=tinysrgb&w=600', span: 'col-span-1 row-span-1' },
 ];
 
-const deals = [
-  { title: 'Complete Skincare Set', discount: '25% OFF', price: '$149.99', originalPrice: '$199.99', description: '6-piece daily routine, formulated to layer' },
-  { title: 'Anti-Aging Bundle', discount: '30% OFF', price: '$179.99', originalPrice: '$257.99', description: 'Retinol, peptides, and collagen support' },
-  { title: 'Hydration Collection', discount: '20% OFF', price: '$119.99', originalPrice: '$149.99', description: 'Three-step moisture-barrier routine' },
-];
-
 const testimonials = [
   { name: 'Sarah Johnson', rating: 5, review: 'The Vitamin C serum completely changed my skin. Dark spots faded in three weeks — I keep three bottles in rotation now.', product: 'Vitamin C Brightening Serum', image: 'https://images.pexels.com/photos/774909/pexels-photo-774909.jpeg?auto=compress&cs=tinysrgb&w=150' },
   { name: 'Michael Chen', rating: 5, review: 'Best moisturizer I’ve used. My skin stays hydrated all day without ever feeling greasy or heavy.', product: 'Ultra Hydrating Moisturizer', image: 'https://images.pexels.com/photos/1222271/pexels-photo-1222271.jpeg?auto=compress&cs=tinysrgb&w=150' },
@@ -77,17 +72,38 @@ const articles = [
 const brands = ['PureGlow', 'RadiantSkin', 'Hydraluxe', 'AgelessBeauty', 'ClearBalance', 'NightRevive', 'PureEarth'];
 
 export const Home: React.FC = () => {
+  const { products, categories: managedCategories, bundles, blogPosts, homeContent, saveSubscriber } = useStoreData();
+  const { notify } = useToast();
   const [currentSlide, setCurrentSlide] = useState(0);
   const [activeTestimonial, setActiveTestimonial] = useState(0);
+  const [newsletterEmail, setNewsletterEmail] = useState('');
+  const activeProducts = products.filter(product => product.status !== 'Archived');
+  const featuredProducts = activeProducts.filter(product => product.isBestSeller || product.featured).slice(0, 4);
+  const activeHeroSlides = homeContent.heroSlides.filter(item => item.active).sort((a, b) => a.order - b.order);
+  const dynamicCategories = managedCategories.filter(item => item.status === 'Active').map((item, index) => ({
+    name: item.name,
+    image: item.image,
+    span: categories[index]?.span || 'col-span-1 row-span-1',
+  }));
+  const displayArticles = blogPosts.filter(post => post.status === 'Published').map((post, index) => ({
+    title: post.title,
+    category: post.category,
+    image: post.featuredImage,
+    excerpt: post.excerpt,
+    slug: post.slug,
+    big: index === 0,
+  }));
 
   useEffect(() => {
-    const timer = setInterval(() => setCurrentSlide(prev => (prev + 1) % heroSlides.length), 6000);
+    const timer = setInterval(() => setCurrentSlide(prev => (prev + 1) % Math.max(1, activeHeroSlides.length)), 6000);
     return () => clearInterval(timer);
-  }, []);
+  }, [activeHeroSlides.length]);
 
-  const nextSlide = () => setCurrentSlide(prev => (prev + 1) % heroSlides.length);
-  const prevSlide = () => setCurrentSlide(prev => (prev - 1 + heroSlides.length) % heroSlides.length);
-  const slide = heroSlides[currentSlide];
+  const nextSlide = () => setCurrentSlide(prev => (prev + 1) % Math.max(1, activeHeroSlides.length));
+  const prevSlide = () => setCurrentSlide(prev => (prev - 1 + Math.max(1, activeHeroSlides.length)) % Math.max(1, activeHeroSlides.length));
+  const slide = activeHeroSlides[currentSlide % Math.max(1, activeHeroSlides.length)] || heroSlides[0];
+  const slideCta = 'ctaText' in slide ? slide.ctaText : slide.cta;
+  const slideLink = 'ctaLink' in slide ? slide.ctaLink : '/products';
 
   return (
     <div>
@@ -113,8 +129,8 @@ export const Home: React.FC = () => {
                     {slide.subtitle}
                   </p>
                   <div className="flex flex-wrap gap-4">
-                    <Link to="/products">
-                      <Button size="lg">{slide.cta}</Button>
+                    <Link to={slideLink}>
+                      <Button size="lg">{slideCta}</Button>
                     </Link>
                     <Link to="/about">
                       <Button variant="outlineLight" size="lg">Our Formulas</Button>
@@ -166,7 +182,7 @@ export const Home: React.FC = () => {
 
         <div className="absolute bottom-8 right-8 lg:right-12 z-10 flex items-center gap-4">
           <span className="font-mono text-xs text-porcelain-paper/40 tabular">
-            0{currentSlide + 1} / 0{heroSlides.length}
+            0{currentSlide + 1} / 0{Math.max(1, activeHeroSlides.length)}
           </span>
           <div className="flex gap-2">
             <button onClick={prevSlide} className="w-10 h-10 rounded-full border border-porcelain-paper/20 hover:border-copper-glow hover:text-copper-glow flex items-center justify-center transition-colors" aria-label="Previous slide">
@@ -210,7 +226,7 @@ export const Home: React.FC = () => {
             </div>
           </AnimatedSection>
           <div className="grid grid-cols-2 sm:grid-cols-4 grid-flow-row-dense auto-rows-[150px] sm:auto-rows-[170px] gap-4">
-            {categories.map((category, index) => (
+            {dynamicCategories.map((category, index) => (
               <AnimatedSection key={category.name} delay={index * 0.06} className={category.span}>
                 <Link to={`/products?category=${category.name}`} className="group relative overflow-hidden rounded-2xl h-full block">
                   <img src={category.image} alt={category.name} className="w-full h-full object-cover transition-transform duration-700 ease-expo group-hover:scale-110" loading="lazy" />
@@ -261,7 +277,7 @@ export const Home: React.FC = () => {
         </div>
         <div className="container-custom">
           <div className="flex gap-6 overflow-x-auto no-scrollbar snap-x snap-mandatory pb-4">
-            {products.filter(p => p.isNew).map((product, i) => (
+            {activeProducts.filter(p => p.isNew).map((product, i) => (
               <div key={product.id} className="w-[240px] sm:w-[270px] shrink-0 snap-start">
                 <ProductCard product={product} index={i} />
               </div>
@@ -282,7 +298,7 @@ export const Home: React.FC = () => {
             </div>
           </AnimatedSection>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {deals.map((deal, index) => (
+            {bundles.filter(bundle => bundle.status === 'Active').map((deal, index) => (
               <AnimatedSection key={deal.title} delay={index * 0.12}>
                 <motion.div
                   className="relative bg-espresso-2 border border-porcelain-paper/10 rounded-2xl p-7 hover:border-copper/40 transition-colors duration-300"
@@ -290,13 +306,13 @@ export const Home: React.FC = () => {
                   transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
                 >
                   <div className="absolute -top-3 left-7 bg-copper text-porcelain-paper label-tag px-3 py-1.5 rounded-full">
-                    {deal.discount}
+                    {deal.discountPercentage}% OFF
                   </div>
-                  <h3 className="text-xl font-display font-semibold mt-3 mb-2">{deal.title}</h3>
+                  <h3 className="text-xl font-display font-semibold mt-3 mb-2">{deal.name}</h3>
                   <p className="text-porcelain-paper/55 text-sm mb-6">{deal.description}</p>
                   <div className="flex items-baseline gap-3 mb-6 pb-6 border-b border-dashed border-porcelain-paper/15">
-                    <span className="font-mono text-2xl tabular">{deal.price}</span>
-                    <span className="font-mono text-sm line-through text-porcelain-paper/35 tabular">{deal.originalPrice}</span>
+                    <span className="font-mono text-2xl tabular">${deal.bundlePrice.toFixed(2)}</span>
+                    <span className="font-mono text-sm line-through text-porcelain-paper/35 tabular">${deal.originalTotalPrice.toFixed(2)}</span>
                   </div>
                   <Link to="/products">
                     <Button variant="outlineLight" fullWidth>Shop Bundle</Button>
@@ -369,13 +385,13 @@ export const Home: React.FC = () => {
           </AnimatedSection>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <AnimatedSection className="md:row-span-2">
-              <Link to="/blog" className="group relative rounded-2xl overflow-hidden h-full min-h-[320px] block">
-                <img src={articles[0].image} alt={articles[0].title} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" />
+              <Link to={displayArticles[0]?.slug ? `/blog/${displayArticles[0].slug}` : '/blog'} className="group relative rounded-2xl overflow-hidden h-full min-h-[320px] block">
+                <img src={(displayArticles[0] || articles[0]).image} alt={(displayArticles[0] || articles[0]).title} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" />
                 <div className="absolute inset-0 bg-gradient-to-t from-espresso/85 via-espresso/20 to-transparent" />
                 <div className="absolute inset-0 p-8 flex flex-col justify-end">
-                  <span className="label-tag text-copper-glow mb-3">{articles[0].category}</span>
-                  <h3 className="text-2xl font-display font-semibold text-porcelain-paper mb-3 max-w-sm">{articles[0].title}</h3>
-                  <p className="text-porcelain-paper/65 text-sm max-w-sm mb-4">{articles[0].excerpt}</p>
+                  <span className="label-tag text-copper-glow mb-3">{(displayArticles[0] || articles[0]).category}</span>
+                  <h3 className="text-2xl font-display font-semibold text-porcelain-paper mb-3 max-w-sm">{(displayArticles[0] || articles[0]).title}</h3>
+                  <p className="text-porcelain-paper/65 text-sm max-w-sm mb-4">{(displayArticles[0] || articles[0]).excerpt}</p>
                   <span className="inline-flex items-center text-porcelain-paper font-medium text-sm">
                     Read the guide <ArrowUpRightIcon size={15} className="ml-1.5 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform" />
                   </span>
@@ -383,9 +399,9 @@ export const Home: React.FC = () => {
               </Link>
             </AnimatedSection>
             <div className="flex flex-col gap-6">
-              {articles.slice(1).map((article, index) => (
+              {(displayArticles.length > 1 ? displayArticles : articles).slice(1).map((article, index) => (
                 <AnimatedSection key={article.title} delay={index * 0.1}>
-                  <Link to="/blog" className="group flex gap-5 items-center bg-porcelain-paper border border-porcelain-line rounded-2xl p-4 hover:border-copper/30 transition-colors">
+                  <Link to={'slug' in article ? `/blog/${article.slug}` : '/blog'} className="group flex gap-5 items-center bg-porcelain-paper border border-porcelain-line rounded-2xl p-4 hover:border-copper/30 transition-colors">
                     <div className="w-24 h-24 rounded-xl overflow-hidden shrink-0">
                       <img src={article.image} alt={article.title} className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" />
                     </div>
@@ -432,19 +448,30 @@ export const Home: React.FC = () => {
           >
             <span className="label-tag text-copper-glow">Join the formulation lab</span>
             <h2 className="text-display-2 font-display font-semibold mt-3 mb-5">
-              Get first access to what we’re brewing
+              {homeContent.newsletter.title}
             </h2>
             <p className="text-porcelain-paper/60 mb-10">
-              New formulas, ingredient breakdowns, and early access drops — straight to your inbox.
+              {homeContent.newsletter.description}
             </p>
-            <form className="max-w-md mx-auto flex flex-col sm:flex-row gap-3" onSubmit={e => e.preventDefault()}>
+            <form className="max-w-md mx-auto flex flex-col sm:flex-row gap-3" onSubmit={e => {
+              e.preventDefault();
+              if (newsletterEmail.includes('@')) {
+                saveSubscriber(newsletterEmail, 'Homepage');
+                notify(homeContent.newsletter.successMessage);
+                setNewsletterEmail('');
+              } else {
+                notify('Please enter a valid email address.', 'error');
+              }
+            }}>
               <input
                 type="email"
+                value={newsletterEmail}
+                onChange={e => setNewsletterEmail(e.target.value)}
                 placeholder="your@email.com"
                 aria-label="Email address"
                 className="flex-grow px-6 py-4 rounded-lg bg-porcelain-paper/5 border border-porcelain-paper/20 text-porcelain-paper placeholder:text-porcelain-paper/35 focus:outline-none focus:border-copper-glow focus:ring-2 focus:ring-copper-glow/20 transition-colors"
               />
-              <Button size="lg" className="whitespace-nowrap">Subscribe</Button>
+              <Button size="lg" className="whitespace-nowrap">{homeContent.newsletter.buttonText}</Button>
             </form>
             <p className="text-xs text-porcelain-paper/35 mt-5">Join 50,000+ subscribers. Unsubscribe anytime.</p>
           </motion.div>
@@ -453,3 +480,4 @@ export const Home: React.FC = () => {
     </div>
   );
 };
+
